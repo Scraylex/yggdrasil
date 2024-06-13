@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil.utils;
 
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.*;
@@ -15,7 +14,8 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 
 public final class RdfModelUtils {
-  private RdfModelUtils() {}
+  private RdfModelUtils() {
+  }
 
   @SuppressWarnings("removal")
   public static String modelToString(final Model model, final RDFFormat format)
@@ -81,6 +81,37 @@ public final class RdfModelUtils {
   }
 
   public static String modelToNaturalLanguageString(final Model result) {
-    return null; //todo
+    final var sb = new StringBuilder();
+    for (final var statement : result) {
+      final var str = formatStatement(statement.getSubject(), statement.getPredicate(), statement.getObject());
+      sb.append(str);
+      sb.append("\n");
+    }
+    return sb.toString();
+  }
+
+  //TODO continue template strings
+
+  private static String formatStatement(Resource subject, IRI predicate, Value object) {
+    if (subject.isBNode()) {
+      return """
+        %s %s
+        """.formatted(predicate.getLocalName(), fromatObject(object));
+    } else if (subject.isIRI()) {
+      return """
+        %s %s %s
+        """.formatted(subject.stringValue(), predicate.getLocalName(), fromatObject(object));
+    }
+    return """
+      %s %s %s
+      """.formatted(subject, predicate, fromatObject(object));
+  }
+
+  private static String fromatObject(final Value object) {
+    return switch (object) {
+      case IRI iri -> iri.getLocalName();
+      case Literal literal -> literal.getLabel();
+      default -> object.stringValue();
+    };
   }
 }
