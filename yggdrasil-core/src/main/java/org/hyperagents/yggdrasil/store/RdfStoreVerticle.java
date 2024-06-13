@@ -3,17 +3,6 @@ package org.hyperagents.yggdrasil.store;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.function.Failable;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -28,6 +17,7 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.representation.ResourceRepresentationHandler;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -35,6 +25,14 @@ import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Stores the RDF graphs representing the instantiated artifacts.
@@ -45,6 +43,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/contains";
   private static final String DEFAULT_CONFIG_VALUE = "default";
 
+  private final ResourceRepresentationHandler representationHandler = new ResourceRepresentationHandler();
   private Messagebox<HttpNotificationDispatcherMessage> dispatcherMessagebox;
   private HttpInterfaceConfig httpConfig;
   private RdfStore store;
@@ -187,7 +186,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
   ) throws IOException {
     final var result = this.store.getEntityModel(requestIri);
     if (result.isPresent()) {
-      this.replyWithPayload(message, RdfModelUtils.modelToString(result.get(), RDFFormat.TURTLE));
+      final var headers = message.headers();
+      final var representation = representationHandler.handleRepresentation(headers.getAll("Accept"), result.get());
+      this.replyWithPayload(message, representation);
     } else {
       this.replyEntityNotFound(message);
     }

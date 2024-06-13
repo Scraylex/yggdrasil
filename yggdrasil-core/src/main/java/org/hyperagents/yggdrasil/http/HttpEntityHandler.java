@@ -9,6 +9,7 @@ import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpMethod;
@@ -94,8 +95,13 @@ public class HttpEntityHandler {
 
   public void handleGetEntity(final RoutingContext routingContext) {
     final var entityIri = this.httpConfig.getBaseUri() + routingContext.request().path();
+
+    final var parsedAcceptHeader = routingContext.parsedHeaders().accept();
+    final var deliveryOptions = new DeliveryOptions();
+    parsedAcceptHeader.forEach(mimeHeader -> deliveryOptions.addHeader(HttpHeaders.ACCEPT, mimeHeader.value()));
+
     this.rdfStoreMessagebox
-        .sendMessage(new RdfStoreMessage.GetEntity(entityIri))
+        .sendMessage(new RdfStoreMessage.GetEntity(entityIri), deliveryOptions)
         .onComplete(
           this.handleStoreReply(routingContext, HttpStatus.SC_OK, this.getHeaders(entityIri))
         );
