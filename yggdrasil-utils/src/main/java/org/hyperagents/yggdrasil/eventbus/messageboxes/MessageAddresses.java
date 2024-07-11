@@ -2,6 +2,7 @@ package org.hyperagents.yggdrasil.eventbus.messageboxes;
 
 enum MessageAddresses {
   RDF_STORE("rdfstore"),
+  TEXT("text"),
   CARTAGO("cartago"),
   HTTP_NOTIFICATION_DISPATCHER("dispatcher");
 

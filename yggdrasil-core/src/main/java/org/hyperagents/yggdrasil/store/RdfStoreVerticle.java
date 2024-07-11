@@ -187,7 +187,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var result = this.store.getEntityModel(requestIri);
     if (result.isPresent()) {
       final var headers = message.headers();
-      final var representation = representationHandler.handleRepresentation(headers.getAll("Accept"), result.get());
+      final var representation = representationHandler.handleRepresentation(headers.getAll("Accept"), result.get(), requestIri);
       this.replyWithPayload(message, representation);
     } else {
       this.replyEntityNotFound(message);

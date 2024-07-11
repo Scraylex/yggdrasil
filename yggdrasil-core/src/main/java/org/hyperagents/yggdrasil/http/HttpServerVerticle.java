@@ -1,12 +1,15 @@
 package org.hyperagents.yggdrasil.http;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.ServerWebSocket;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import org.apache.http.entity.ContentType;
+import org.hyperagents.yggdrasil.text.TextMessageHandler;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
@@ -39,12 +42,28 @@ public class HttpServerVerticle extends AbstractVerticle {
                                   .<String, WebSubConfig>getLocalMap("notification-config")
                                   .get("default");
     this.server = this.vertx.createHttpServer();
+
+    final var textMessageHandler = new TextMessageHandler(
+      this.vertx,
+      httpConfig,
+      environmentConfig,
+      notificationConfig
+    );
+    this.server.webSocketHandler(webSocketHandler(textMessageHandler));
+
     this.server.requestHandler(
                  this.createRouter(httpConfig, this.environmentConfig, this.notificationConfig)
                )
                .listen(httpConfig.getPort(), httpConfig.getHost())
                .<Void>mapEmpty()
                .onComplete(startPromise);
+  }
+
+  private Handler<ServerWebSocket> webSocketHandler(TextMessageHandler handler) {
+    return socket -> {
+      socket.textMessageHandler(handler.handleTextMessage(socket));
+      socket.closeHandler(x -> System.out.println("Disconnected: " + socket.textHandlerID()));
+    };
   }
 
   @Override

@@ -79,39 +79,4 @@ public final class RdfModelUtils {
   public static IRI createIri(final String iriString) throws IllegalArgumentException {
     return SimpleValueFactory.getInstance().createIRI(iriString);
   }
-
-  public static String modelToNaturalLanguageString(final Model result) {
-    final var sb = new StringBuilder();
-    for (final var statement : result) {
-      final var str = formatStatement(statement.getSubject(), statement.getPredicate(), statement.getObject());
-      sb.append(str);
-      sb.append("\n");
-    }
-    return sb.toString();
-  }
-
-  //TODO continue template strings
-
-  private static String formatStatement(Resource subject, IRI predicate, Value object) {
-    if (subject.isBNode()) {
-      return """
-        %s %s
-        """.formatted(predicate.getLocalName(), fromatObject(object));
-    } else if (subject.isIRI()) {
-      return """
-        %s %s %s
-        """.formatted(subject.stringValue(), predicate.getLocalName(), fromatObject(object));
-    }
-    return """
-      %s %s %s
-      """.formatted(subject, predicate, fromatObject(object));
-  }
-
-  private static String fromatObject(final Value object) {
-    return switch (object) {
-      case IRI iri -> iri.getLocalName();
-      case Literal literal -> literal.getLabel();
-      default -> object.stringValue();
-    };
-  }
 }
