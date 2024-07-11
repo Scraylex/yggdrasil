@@ -4,10 +4,13 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
 public enum KnownPredicates {
-  WORKSPACE(KnownNamespaces.HMAS, "Workspace"),
-  HOSTS(KnownNamespaces.HMAS, "hosts"),
-  HMASPLATFORM(KnownNamespaces.HMAS, "HypermediaMASPlatform"),
-  TYPE(KnownNamespaces.RDF, "type"),
+  HMAS_WORKSPACE(KnownNamespaces.HMAS, "Workspace"),
+  HMAS_ARTIFACT(KnownNamespaces.HMAS, "Artifact"),
+  HMAS_HOSTS(KnownNamespaces.HMAS, "hosts"),
+  HMAS_CONTAINS(KnownNamespaces.HMAS, "contains"),
+  HMAS_PLATFORM(KnownNamespaces.HMAS, "HypermediaMASPlatform"),
+  RDF_TYPE(KnownNamespaces.RDF, "type"),
+  TD_ACTION_AFFORDANCE(KnownNamespaces.TD, "ActionAffordance"),
 
   ;
 

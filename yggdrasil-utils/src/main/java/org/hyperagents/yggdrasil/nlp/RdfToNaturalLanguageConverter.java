@@ -11,14 +11,14 @@ public class RdfToNaturalLanguageConverter {
 
   public static String modelResourceToNaturalLanguageString(final Model model, final IRI targetIri) {
     final var subjectRepresentation = new ArrayList<String>();
-    model.filter(targetIri, KnownPredicates.TYPE.getIRI(), null)
+    model.filter(targetIri, KnownPredicates.RDF_TYPE.getIRI(), null)
       .objects()
       .stream()
       .filter(Value::isIRI)
       .map(Value::stringValue)
       .map(RdfModelUtils::createIri)
       .forEach(iri -> {
-        RdfPredicateHandler handler = RdfPredicateHandlerRegistry.getHandler(iri);
+        RdfTypeHandler handler = RdfTypeHandlerRegistry.getHandler(iri);
         if (handler != null) {
           subjectRepresentation.add(handler.handleStatement(model, targetIri, 0));
         }

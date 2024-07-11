@@ -21,6 +21,9 @@ import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class TextMessageHandler {
 
@@ -52,15 +55,89 @@ public class TextMessageHandler {
 
   public Handler<String> handleTextMessage(ServerWebSocket socket) {
     return message -> {
-      if (message.contains("go to")) {
-        handleGoTo(socket, message);
+      System.out.println("Received message: "+ message);
+      // manipulation to deal with llm
+      String cleanedMsg = message.replace("'", "");
+
+      if (message.contains("goto")) {
+        handleGoTo(socket, cleanedMsg);
+      } else if (message.contains("doAction")) {
+        handleDoAction(socket, cleanedMsg);
+      } else if (message.contains("query")) {
+        handleSparqlQuery(socket, cleanedMsg);
+      } else {
+        handleUnmappedGrammar(socket, cleanedMsg);
       }
     };
   }
 
+  private void handleUnmappedGrammar(ServerWebSocket socket, String message) {
+    System.out.println("Unmapped grammar: "+ message);
+    socket.writeTextMessage("I'm sorry, I don't understand. Please use the following grammar: 'goto <entity>', 'doAction <action> <param1?> <param2?>', 'query <sparql query>'.");
+  }
+
+  private void handleSparqlQuery(ServerWebSocket socket, String message) {
+    String query = message.split("query")[1].trim();
+    rdfStoreMessagebox.sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(query, List.of(), List.of(), "text/turtle"))
+      .onComplete(messageAsyncResult -> {
+        if (messageAsyncResult.succeeded()) {
+//          final var body = messageAsyncResult.result().body();
+//          try {
+//            final var targetIri = RdfModelUtils.createIri(target);
+//            final var model = RdfModelUtils.stringToModel(body, targetIri, RDFFormat.TURTLE);
+//            System.out.println(("Model: {}", model);
+//            final var responseString = RdfToNaturalLanguageConverter.modelResourceToNaturalLanguageString(model, targetIri);
+//            System.out.println(("Response: {}", responseString);
+//            socket.writeTextMessage(responseString);
+//          } catch (IOException e) {
+//            final var string = "Failed to serialize model.";
+//            LOGGER.error(string, e);
+//            socket.writeTextMessage(string);
+//          }
+          socket.writeTextMessage("Todo: implement query handling.");
+        } else {
+          socket.writeTextMessage("Query failed");
+        }
+      });
+
+  }
+
+  private void handleDoAction(ServerWebSocket socket, String message) {
+    final var args = message.split(" ");
+    final var targetAction = args[0];
+    final var params = Arrays.stream(args)
+      .skip(1)
+      .toList();
+    System.out.println("invoking action {} with params {}"+ targetAction + " " + String.join(", ", params));
+    socket.writeTextMessage("Todo: implement action handling.");
+//    cartagoMessagebox.sendMessage(new CartagoMessage.DoAction()) TODO
+
+
+//    rdfStoreMessagebox.sendMessage(new RdfStoreMessage.(target))
+//      .onComplete(messageAsyncResult -> {
+//        if (messageAsyncResult.succeeded()) {
+//          final var body = messageAsyncResult.result().body();
+//          try {
+//            final var targetIri = RdfModelUtils.createIri(target);
+//            final var model = RdfModelUtils.stringToModel(body, targetIri, RDFFormat.TURTLE);
+//            System.out.println(("Model: {}", model);
+//            final var responseString = RdfToNaturalLanguageConverter.modelResourceToNaturalLanguageString(model, targetIri);
+//            System.out.println(("Response: {}", responseString);
+//            socket.writeTextMessage(responseString);
+//          } catch (IOException e) {
+//            final var string = "Failed to serialize model.";
+//            LOGGER.error(string, e);
+//            socket.writeTextMessage(string);
+//          }
+//        } else {
+//          socket.writeTextMessage("Entity not found.");
+//        }
+//      });
+  }
+
   private void handleGoTo(ServerWebSocket socket, String message) {
-    final var target = message.split("go to")[1].trim();
-    LOGGER.info("Navigating to {}", target);
+    final var target = message.split("goto")[1].trim();
+    System.out.println("Navigating to " + target);
     rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntity(target))
       .onComplete(messageAsyncResult -> {
         if (messageAsyncResult.succeeded()) {
@@ -68,9 +145,9 @@ public class TextMessageHandler {
           try {
             final var targetIri = RdfModelUtils.createIri(target);
             final var model = RdfModelUtils.stringToModel(body, targetIri, RDFFormat.TURTLE);
-            LOGGER.info("Model: {}", model);
+            System.out.println("Model: " + model);
             final var responseString = RdfToNaturalLanguageConverter.modelResourceToNaturalLanguageString(model, targetIri);
-            LOGGER.info("Response: {}", responseString);
+            System.out.println("Response: " + responseString);
             socket.writeTextMessage(responseString);
           } catch (IOException e) {
             final var string = "Failed to serialize model.";

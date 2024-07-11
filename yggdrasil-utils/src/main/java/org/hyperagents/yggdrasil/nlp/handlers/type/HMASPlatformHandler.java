@@ -1,15 +1,14 @@
-package org.hyperagents.yggdrasil.nlp.handlers;
+package org.hyperagents.yggdrasil.nlp.handlers.type;
 
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.hyperagents.yggdrasil.nlp.IdentUtil;
 import org.hyperagents.yggdrasil.nlp.KnownPredicates;
-import org.hyperagents.yggdrasil.nlp.RdfPredicateHandler;
-import org.hyperagents.yggdrasil.nlp.RdfPredicateHandlerRegistry;
+import org.hyperagents.yggdrasil.nlp.RdfTypeHandler;
 
 import java.util.stream.Collectors;
 
-public class HMASPlatformHandler implements RdfPredicateHandler {
+public class HMASPlatformHandler implements RdfTypeHandler {
   @Override
   public String handleStatement(final Model model,
                                 final Resource subject,
@@ -24,7 +23,7 @@ public class HMASPlatformHandler implements RdfPredicateHandler {
   }
 
   private static void handleHostsWorkspaces(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
-    final var list = model.filter(subject, KnownPredicates.HOSTS.getIRI(), null).stream().toList();
+    final var list = model.filter(subject, KnownPredicates.HMAS_HOSTS.getIRI(), null).stream().toList();
     if (!list.isEmpty()) {
       final var collect = list.stream()
         .map(statement -> statement.getObject().stringValue())
@@ -34,17 +33,17 @@ public class HMASPlatformHandler implements RdfPredicateHandler {
     }
   }
 
-  private static void handleWorkspacesInHMASPlatform(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
-    final var list = model.filter(subject, KnownPredicates.WORKSPACE.getIRI(), null).stream().toList();
-    if (!list.isEmpty()) {
-      final var str = "\nHosts the following workspaces:\n";
-      stringBuilder.append(IdentUtil.identString(indentLevel, str));
-      list.stream()
-        .map(statement -> RdfPredicateHandlerRegistry.WORKSPACE_HANDLER.handleStatement(model, statement.getSubject(), indentLevel + 1))
-        .forEach(stringBuilder::append);
-    } else {
-      final var s = "\nDoes not contain any workspaces.";
-      stringBuilder.append(IdentUtil.identString(indentLevel, s));
-    }
-  }
+//  private static void handleWorkspacesInHMASPlatform(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
+//    final var list = model.filter(subject, KnownPredicates.HMAS_WORKSPACE.getIRI(), null).stream().toList();
+//    if (!list.isEmpty()) {
+//      final var str = "\nHosts the following workspaces:\n";
+//      stringBuilder.append(IdentUtil.identString(indentLevel, str));
+//      list.stream()
+//        .map(statement -> RdfTypeHandlerRegistry.WORKSPACE_HANDLER.handleStatement(model, statement.getSubject(), indentLevel + 1))
+//        .forEach(stringBuilder::append);
+//    } else {
+//      final var s = "\nDoes not contain any workspaces.";
+//      stringBuilder.append(IdentUtil.identString(indentLevel, s));
+//    }
+//  }
 }

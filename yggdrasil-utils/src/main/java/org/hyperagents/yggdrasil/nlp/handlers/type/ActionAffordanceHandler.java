@@ -1,12 +1,9 @@
-package org.hyperagents.yggdrasil.nlp.handlers;
+package org.hyperagents.yggdrasil.nlp.handlers.type;
 
 import org.eclipse.rdf4j.model.*;
-import org.hyperagents.yggdrasil.nlp.RdfPredicateHandler;
+import org.hyperagents.yggdrasil.nlp.RdfTypeHandler;
 
-import java.util.List;
-import java.util.stream.StreamSupport;
-
-public class ActionAffordanceHandler implements RdfPredicateHandler {
+public class ActionAffordanceHandler implements RdfTypeHandler {
   @Override
   public String handleStatement(final Model model,
                                 final Resource subject,

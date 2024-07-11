@@ -1,0 +1,47 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "environment-config" : {
+    "known-artifacts" : [
+      {
+        "class" : "http://example.org/Block",
+        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld.Block"
+      }
+    ],
+    "workspaces" : [
+      {
+        "name" : "w0",
+        "artifacts" : [
+          {
+            "name" : "block1",
+            "class" : "http://example.org/Block",
+            "init-params" : [
+              "LEFT"
+            ]
+          },
+          {
+            "name" : "block2",
+            "class" : "http://example.org/Block",
+            "init-params" : [
+              "CENTER"
+            ]
+          },
+          {
+            "name" : "block3",
+            "class" : "http://example.org/Block",
+            "init-params" : [
+              "RIGHT"
+            ]
+          }
+        ]
+      }
+    ],
+    "enabled" : true
+  }
+}
