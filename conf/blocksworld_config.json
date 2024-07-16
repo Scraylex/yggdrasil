@@ -10,8 +10,12 @@
   "environment-config" : {
     "known-artifacts" : [
       {
-        "class" : "http://example.org/Block",
-        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld.Block"
+        "class" : "http://example.org/TableArtifact",
+        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld.TableArtifact"
+      },
+      {
+        "class" : "http://example.org/Robot",
+        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld.Robot"
       }
     ],
     "workspaces" : [
@@ -19,26 +23,28 @@
         "name" : "w0",
         "artifacts" : [
           {
-            "name" : "block1",
-            "class" : "http://example.org/Block",
-            "init-params" : [
-              "LEFT"
+            "name" : "table",
+            "class" : "http://example.org/TableArtifact",
+            "focused-by" : [
+              {
+                "agent-uri" : "http://localhost:8080/agents/test",
+                "callback-uri" : "http://localhost:5000/websub"
+              }
             ]
           },
           {
-            "name" : "block2",
-            "class" : "http://example.org/Block",
-            "init-params" : [
-              "CENTER"
-            ]
-          },
-          {
-            "name" : "block3",
-            "class" : "http://example.org/Block",
-            "init-params" : [
-              "RIGHT"
+            "name" : "robot",
+            "class" : "http://example.org/Robot",
+            "focused-by" : [
+              {
+                "agent-uri" : "http://localhost:8080/agents/test",
+                "callback-uri" : "http://localhost:8081/"
+              }
             ]
           }
+        ],
+        "agents" : [
+          "http://localhost:8080/agents/llm-agent"
         ]
       }
     ],

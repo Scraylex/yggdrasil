@@ -346,7 +346,8 @@ public class CartagoVerticle extends AbstractVerticle {
     final var agentName = this.getAgentNameFromAgentUri(agentUri);
     this.dispatcherMessagebox.sendMessage(
       new HttpNotificationDispatcherMessage.ActionRequested(
-        this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+        this.httpConfig.getArtifactUri(workspaceName, artifactName),
+//                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
         this.getActionNotificationContent(artifactName, action).encode()
       )
     );
@@ -356,7 +357,8 @@ public class CartagoVerticle extends AbstractVerticle {
                        if (e instanceof ActionSucceededEvent) {
                          this.dispatcherMessagebox.sendMessage(
                            new HttpNotificationDispatcherMessage.ActionSucceeded(
-                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+                             this.httpConfig.getArtifactUri(workspaceName, artifactName),
+//                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
                              this.getActionNotificationContent(artifactName, action).encode()
                            )
                          );
@@ -364,7 +366,8 @@ public class CartagoVerticle extends AbstractVerticle {
                        } else if (e instanceof ActionFailedEvent f) {
                          this.dispatcherMessagebox.sendMessage(
                            new HttpNotificationDispatcherMessage.ActionFailed(
-                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+                             this.httpConfig.getArtifactUri(workspaceName, artifactName),
+//                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
                              this.getActionNotificationContent(artifactName, action)
                                  .put("cause", f.getFailureMsg())
                                  .encode()
