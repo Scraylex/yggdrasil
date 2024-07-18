@@ -10,26 +10,43 @@ import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
+
+import java.util.Optional;
 import java.util.Set;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.model.Workspace;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 
 public final class RepresentationFactoryImpl implements RepresentationFactory {
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
 
   private final HttpInterfaceConfig httpConfig;
+  private final Environment environment;
 
-  public RepresentationFactoryImpl(final HttpInterfaceConfig httpConfig) {
+  public RepresentationFactoryImpl(final HttpInterfaceConfig httpConfig, final Environment environment) {
     this.httpConfig = httpConfig;
+    this.environment = environment;
   }
 
   @Override
   public String createPlatformRepresentation() {
+    String uri = this.httpConfig.getBaseUri() + "/";
+
+    final var model = this.environment.getTextInfo()
+      .map(info -> RdfModelUtils.createCommentModel(uri, info))
+      .orElse(new ModelBuilder().build());
+
     return serializeThingDescription(
       new ThingDescription
         .Builder("yggdrasil")
-        .addThingURI(this.httpConfig.getBaseUri() + "/")
+        .addThingURI(uri)
         .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
         .addAction(
           new ActionAffordance.Builder(
@@ -40,18 +57,30 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           )
           .build()
         )
+        .addGraph(model)
     );
   }
+
+
 
   @Override
   public String createWorkspaceRepresentation(
       final String workspaceName,
       final Set<String> artifactTemplates
   ) {
+    final var uri = this.httpConfig.getWorkspaceUri(workspaceName);
+
+    final var model = this.environment.getWorkspaces().stream()
+      .filter(w -> w.getName().equals(workspaceName))
+      .findFirst()
+      .map(Workspace::getTextInfo)
+      .flatMap(textInfo -> textInfo.map(text -> RdfModelUtils.createCommentModel(uri, text)))
+      .orElse(new ModelBuilder().build());
+
     return serializeThingDescription(
       new ThingDescription
           .Builder(workspaceName)
-          .addThingURI(this.httpConfig.getWorkspaceUri(workspaceName))
+          .addThingURI(uri)
           .addSemanticType("https://purl.org/hmas/Workspace")
           .addAction(
             new ActionAffordance.Builder(
@@ -75,7 +104,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .addAction(
             new ActionAffordance.Builder(
                 "joinWorkspace",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/join")
+                new Form.Builder(uri + "/join")
                         .setMethodName(HttpMethod.POST.name())
                         .build()
             )
@@ -84,7 +113,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .addAction(
             new ActionAffordance.Builder(
                 "quitWorkspace",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/leave")
+                new Form.Builder(uri + "/leave")
                         .setMethodName(HttpMethod.POST.name())
                         .build()
             )
@@ -93,7 +122,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .addAction(
             new ActionAffordance.Builder(
                 "focus",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/focus")
+                new Form.Builder(uri + "/focus")
                         .setMethodName(HttpMethod.POST.name())
                         .build()
             )
@@ -110,12 +139,13 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .addAction(
             new ActionAffordance.Builder(
                 "createSubWorkspace",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName))
+                new Form.Builder(uri)
                         .setMethodName(HttpMethod.POST.name())
                         .build()
             )
             .build()
           )
+        .addGraph(model)
     );
   }
 

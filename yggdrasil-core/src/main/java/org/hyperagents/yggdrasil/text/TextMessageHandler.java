@@ -21,15 +21,15 @@ import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TextMessageHandler {
 
   private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandler.class);
   private static final String WORKSPACE_ID_PARAM = "wkspid";
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
+  private static final String DEFAULT_CONFIG_VALUE = "default";
+
 
   private final Messagebox<CartagoMessage> cartagoMessagebox;
   private final Messagebox<RdfStoreMessage> rdfStoreMessagebox;
@@ -58,7 +58,6 @@ public class TextMessageHandler {
       System.out.println("Received message: "+ message);
       // manipulation to deal with llm
       String cleanedMsg = message.replace("'", "");
-
       if (message.contains("goto")) {
         handleGoTo(socket, cleanedMsg);
       } else if (message.contains("doAction")) {
@@ -103,36 +102,6 @@ public class TextMessageHandler {
   }
 
   private void handleDoAction(ServerWebSocket socket, String message) {
-    final var args = message.split(" ");
-    final var targetAction = args[0];
-    final var params = Arrays.stream(args)
-      .skip(1)
-      .toList();
-    System.out.println("invoking action {} with params {}"+ targetAction + " " + String.join(", ", params));
-    socket.writeTextMessage("Todo: implement action handling.");
-//    cartagoMessagebox.sendMessage(new CartagoMessage.DoAction()) TODO
-
-
-//    rdfStoreMessagebox.sendMessage(new RdfStoreMessage.(target))
-//      .onComplete(messageAsyncResult -> {
-//        if (messageAsyncResult.succeeded()) {
-//          final var body = messageAsyncResult.result().body();
-//          try {
-//            final var targetIri = RdfModelUtils.createIri(target);
-//            final var model = RdfModelUtils.stringToModel(body, targetIri, RDFFormat.TURTLE);
-//            System.out.println(("Model: {}", model);
-//            final var responseString = RdfToNaturalLanguageConverter.modelResourceToNaturalLanguageString(model, targetIri);
-//            System.out.println(("Response: {}", responseString);
-//            socket.writeTextMessage(responseString);
-//          } catch (IOException e) {
-//            final var string = "Failed to serialize model.";
-//            LOGGER.error(string, e);
-//            socket.writeTextMessage(string);
-//          }
-//        } else {
-//          socket.writeTextMessage("Entity not found.");
-//        }
-//      });
   }
 
   private void handleGoTo(ServerWebSocket socket, String message) {

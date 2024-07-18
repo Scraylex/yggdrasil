@@ -1,8 +1,11 @@
 package org.hyperagents.yggdrasil.utils;
 
-import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.rio.*;
 import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
@@ -19,21 +22,21 @@ public final class RdfModelUtils {
 
   @SuppressWarnings("removal")
   public static String modelToString(final Model model, final RDFFormat format)
-      throws IllegalArgumentException, IOException {
+    throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
       final var writer = Rio.createWriter(format, out);
       if (format.equals(RDFFormat.JSONLD)) {
         writer.getWriterConfig()
-              .set(JSONLDSettings.JSONLD_MODE, org.eclipse.rdf4j.rio.helpers.JSONLDMode.FLATTEN)
-              .set(JSONLDSettings.USE_NATIVE_TYPES, true)
-              .set(JSONLDSettings.OPTIMIZE, true);
+          .set(JSONLDSettings.JSONLD_MODE, org.eclipse.rdf4j.rio.helpers.JSONLDMode.FLATTEN)
+          .set(JSONLDSettings.USE_NATIVE_TYPES, true)
+          .set(JSONLDSettings.OPTIMIZE, true);
       }
 
       writer.getWriterConfig()
-            .set(BasicWriterSettings.PRETTY_PRINT, true)
-            .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
-            .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
-            .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
+        .set(BasicWriterSettings.PRETTY_PRINT, true)
+        .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
+        .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
+        .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
       try {
         writer.startRDF();
 
@@ -59,9 +62,9 @@ public final class RdfModelUtils {
   }
 
   public static Model stringToModel(
-      final String graphString,
-      final IRI baseIri,
-      final RDFFormat format
+    final String graphString,
+    final IRI baseIri,
+    final RDFFormat format
   ) throws IllegalArgumentException, IOException {
     try (var stringReader = new StringReader(graphString)) {
       final var rdfParser = Rio.createParser(format);
@@ -78,5 +81,11 @@ public final class RdfModelUtils {
 
   public static IRI createIri(final String iriString) throws IllegalArgumentException {
     return SimpleValueFactory.getInstance().createIRI(iriString);
+  }
+
+  public static Model createCommentModel(String uri, String comment) {
+    return new ModelBuilder()
+      .add(uri, RDFS.COMMENT, SimpleValueFactory.getInstance().createLiteral(comment))
+      .build();
   }
 }

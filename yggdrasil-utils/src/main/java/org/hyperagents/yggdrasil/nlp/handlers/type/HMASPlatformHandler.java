@@ -5,6 +5,8 @@ import org.eclipse.rdf4j.model.Resource;
 import org.hyperagents.yggdrasil.nlp.IdentUtil;
 import org.hyperagents.yggdrasil.nlp.KnownPredicates;
 import org.hyperagents.yggdrasil.nlp.RdfTypeHandler;
+import org.hyperagents.yggdrasil.nlp.handlers.predicate.CommentHandler;
+import org.hyperagents.yggdrasil.nlp.handlers.predicate.HasActionAffordanceHandler;
 
 import java.util.stream.Collectors;
 
@@ -17,8 +19,11 @@ public class HMASPlatformHandler implements RdfTypeHandler {
     final var formatted = "%s is a Hypermedia Multi Agent System platform".formatted(subject.stringValue());
     stringBuilder.append(IdentUtil.identString(indentLevel, formatted));
     stringBuilder.append("\n");
-//    handleWorkspacesInHMASPlatform(model, subject, indentLevel, stringBuilder);
     handleHostsWorkspaces(model, subject, indentLevel, stringBuilder);
+    stringBuilder.append("\n");
+//    handleHasActionAffordances(model, subject, indentLevel, stringBuilder);
+//    stringBuilder.append("\n");
+    handleComment(model, subject, indentLevel, stringBuilder);
     return stringBuilder.toString();
   }
 
@@ -33,17 +38,13 @@ public class HMASPlatformHandler implements RdfTypeHandler {
     }
   }
 
-//  private static void handleWorkspacesInHMASPlatform(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
-//    final var list = model.filter(subject, KnownPredicates.HMAS_WORKSPACE.getIRI(), null).stream().toList();
-//    if (!list.isEmpty()) {
-//      final var str = "\nHosts the following workspaces:\n";
-//      stringBuilder.append(IdentUtil.identString(indentLevel, str));
-//      list.stream()
-//        .map(statement -> RdfTypeHandlerRegistry.WORKSPACE_HANDLER.handleStatement(model, statement.getSubject(), indentLevel + 1))
-//        .forEach(stringBuilder::append);
-//    } else {
-//      final var s = "\nDoes not contain any workspaces.";
-//      stringBuilder.append(IdentUtil.identString(indentLevel, s));
-//    }
-//  }
+  private static void handleComment(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
+    final var string = new CommentHandler().handleStatement(model, subject, indentLevel);
+    stringBuilder.append(string);
+  }
+
+  private static void handleHasActionAffordances(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
+    final var string = new HasActionAffordanceHandler().handleStatement(model, subject, indentLevel);
+    stringBuilder.append(string);
+  }
 }

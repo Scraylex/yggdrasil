@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.cartago.blocksworld;
 
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -14,13 +15,13 @@ public class Table {
   private final Map<Position, List<String>> columns;
 
   private Table() {
-    blocks = Map.ofEntries(
+    this.blocks = Map.ofEntries(
       Map.entry("A", new Block(Position.LEFT, 0, true)),
       Map.entry("B", new Block(Position.CENTER, 0, true)),
       Map.entry("C", new Block(Position.RIGHT, 0, true))
     );
 
-    columns = Map.ofEntries(
+    this.columns = Map.ofEntries(
       Map.entry(Position.LEFT, new LinkedList<>() {{
         add("A");
       }}),
@@ -35,11 +36,13 @@ public class Table {
 
   public String getCurrentState() {
     final var stringBuilder = new StringBuilder();
-    columns.keySet()
+    Table.getInstance().getColumns().keySet()
+      .stream()
+      .sorted(Comparator.comparing(Enum::name))
       .forEach(position -> stringBuilder
         .append(position.name())
         .append(": ")
-        .append(String.join(",", columns.get(position)))
+        .append(String.join(",", Table.getInstance().getColumns().get(position)))
         .append("\n"));
     return stringBuilder.toString();
   }
@@ -51,8 +54,16 @@ public class Table {
     return instance;
   }
 
+  public Map<String, Block> getBlocks() {
+    return blocks;
+  }
+
+  public Map<Position, List<String>> getColumns() {
+    return columns;
+  }
+
   public boolean isCorrectOrder() {
-    final var strings = columns.get(Position.CENTER);
+    final var strings = Table.getInstance().getColumns().get(Position.CENTER);
     if (strings.size() == 3) {
       return strings.get(0).equals("A") && strings.get(1).equals("B") && strings.get(2).equals("C");
     }
@@ -60,24 +71,28 @@ public class Table {
   }
 
   public boolean moveBlock(String blockName, Position newPosition) {
-    final var block = blocks.get(blockName);
-    final var oldPosition = block.position;
+    final var block = Table.getInstance().getBlocks().get(blockName);
+    final var oldPosition = block.getPosition();
 
-    if (block.isMoveable) {
-      List<String> strings = columns.get(newPosition);
+    if (block.isMoveable()) {
+      List<String> strings = Table.getInstance().getColumns().get(newPosition);
       // set block at new position & index
       int i = strings.size();
-      block.position = newPosition;
-      block.index = i;
-
-      //manipulate columns
+      block.setPosition(newPosition);
+      block.setIndex(i);
       strings.addLast(blockName);
-      columns.get(oldPosition).removeLast();
 
-      // set block below as not moveable
+      //handle old column and blocks
+      Table.getInstance().getColumns().get(oldPosition).removeLast();
+      if(!Table.getInstance().getColumns().get(oldPosition).isEmpty()) {
+        String oldColumnLastBlock = Table.getInstance().getColumns().get(oldPosition).getLast();
+        Table.getInstance().getBlocks().get(oldColumnLastBlock).setMoveable(true);
+      }
+
+      // handle new column and block
       if (i != 0) {
         String s = strings.get(i - 1);
-        blocks.get(s).isMoveable = false;
+        Table.getInstance().getBlocks().get(s).setMoveable(false);
       }
       return true;
     }
@@ -92,6 +107,31 @@ public class Table {
     Block(Position position, int index, boolean isMoveable) {
       this.position = position;
       this.index = index;
+      this.isMoveable = isMoveable;
+    }
+
+    public Position getPosition() {
+      return position;
+    }
+
+    public void setPosition(Position position) {
+      this.position = position;
+    }
+
+    public int getIndex() {
+      return index;
+    }
+
+    public void setIndex(int index) {
+      this.index = index;
+    }
+
+    public boolean isMoveable() {
+      return isMoveable;
+    }
+
+    public void setMoveable(boolean moveable) {
+      isMoveable = moveable;
     }
   }
 }

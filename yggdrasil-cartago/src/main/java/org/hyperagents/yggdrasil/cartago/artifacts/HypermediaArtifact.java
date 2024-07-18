@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
@@ -43,8 +44,14 @@ public abstract class HypermediaArtifact extends Artifact {
                                                 .sharedData()
                                                 .<String, HttpInterfaceConfig>getLocalMap("http-config")
                                                 .get(DEFAULT_CONFIG_VALUE);
+  private final Environment environment = Vertx.currentContext()
+    .owner()
+    .sharedData()
+    .<String, Environment>getLocalMap("environment")
+    .get(DEFAULT_CONFIG_VALUE);
+
   private RepresentationFactory representationFactory =
-      new RepresentationFactoryImpl(this.httpConfig);
+      new RepresentationFactoryImpl(this.httpConfig, this.environment);
   private SecurityScheme securityScheme = new NoSecurityScheme();
 
   /**
@@ -115,7 +122,7 @@ public abstract class HypermediaArtifact extends Artifact {
           baseUri.toString()
         )
       ));
-      this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+      this.representationFactory = new RepresentationFactoryImpl(this.httpConfig, this.environment);
     }
     this.registerInteractionAffordances();
     HypermediaArtifactRegistry.getInstance().register(this);

@@ -64,12 +64,16 @@ public class CartagoVerticle extends AbstractVerticle {
 
   @Override
   public void start(final Promise<Void> startPromise) {
+    final var environment = this.vertx
+      .sharedData()
+      .<String, Environment>getLocalMap("environment")
+      .get(DEFAULT_CONFIG_VALUE);
     this.httpConfig = this.vertx
                           .sharedData()
                           .<String, HttpInterfaceConfig>getLocalMap("http-config")
                           .get(DEFAULT_CONFIG_VALUE);
     this.workspaceRegistry = new WorkspaceRegistryImpl();
-    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig, environment);
     this.agentCredentials = new HashMap<>();
 
     final var eventBus = this.vertx.eventBus();

@@ -128,12 +128,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     .orElse(RdfStoreFactory.createInMemoryStore());
           final var platformIri = RdfModelUtils.createIri(this.httpConfig.getBaseUri() + "/");
           this.store.addEntityModel(
+            platformIri,
+            RdfModelUtils.stringToModel(
+              new RepresentationFactoryImpl(this.httpConfig, this.vertx.sharedData()
+                .<String, Environment>getLocalMap("environment")
+                .get(DEFAULT_CONFIG_VALUE)
+              ).createPlatformRepresentation(),
               platformIri,
-              RdfModelUtils.stringToModel(
-                new RepresentationFactoryImpl(this.httpConfig).createPlatformRepresentation(),
-                platformIri,
-                RDFFormat.TURTLE
-              )
+              RDFFormat.TURTLE
+            )
           );
           if (
               !this.vertx

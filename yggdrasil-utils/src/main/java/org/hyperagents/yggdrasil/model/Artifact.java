@@ -15,4 +15,7 @@ public interface Artifact {
   Set<FocusingAgent> getFocusingAgents();
 
   Optional<Path> getRepresentation();
+
+  Optional<String> getTextInfo();
+
 }

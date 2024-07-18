@@ -30,6 +30,7 @@ public final class EnvironmentParser {
   public static Environment parse(final JsonObject config) {
     final var envConfig =
         JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);
+    final var envTextInfo = envConfig.flatMap(ecfg -> JsonObjectUtils.getString(ecfg, "text-info", LOGGER::error));
     final var knownArtifacts =
         envConfig
           .flatMap(c -> JsonObjectUtils.getJsonArray(c, "known-artifacts", LOGGER::error))
@@ -81,6 +82,7 @@ public final class EnvironmentParser {
           .stream()
           .<Workspace>flatMap(w -> {
             final var name = JsonObjectUtils.getString(w, "name", LOGGER::error);
+            final var textInfo = JsonObjectUtils.getString(w, "text-info", LOGGER::error);
             if (name.isEmpty()) {
               LOGGER.warn("Workspace missing name, skipping");
               return Stream.empty();
@@ -119,6 +121,7 @@ public final class EnvironmentParser {
                   .<Artifact>flatMap(ar -> {
                     final var artifactName = JsonObjectUtils.getString(ar, "name", LOGGER::error);
                     final var artifactClass = JsonObjectUtils.getString(ar, "class", LOGGER::error);
+                    final var artifactTextInfo = JsonObjectUtils.getString(ar, "text-info", LOGGER::error);
                     if (artifactName.isEmpty()) {
                       LOGGER.warn("Artifact in workspace missing name, skipping");
                       return Stream.empty();
@@ -179,16 +182,19 @@ public final class EnvironmentParser {
                           ));
                         })
                         .collect(Collectors.toSet()),
-                      representation.map(Path::of)
+                      representation.map(Path::of),
+                      artifactTextInfo
                     ));
                   })
                   .collect(Collectors.toSet()),
-              JsonObjectUtils.getString(w, "representation", LOGGER::error).map(Path::of)
+              JsonObjectUtils.getString(w, "representation", LOGGER::error).map(Path::of),
+              textInfo
             ));
           })
           .toList()
       ),
-      knownArtifacts
+      knownArtifacts,
+      envTextInfo
     );
   }
 
@@ -215,7 +221,8 @@ public final class EnvironmentParser {
 
   private record EnvironmentImpl(
       List<Workspace> workspaces,
-      Set<KnownArtifact> knownArtifacts
+      Set<KnownArtifact> knownArtifacts,
+      Optional<String> textInfo
   ) implements Environment {
 
     @Override
@@ -226,6 +233,11 @@ public final class EnvironmentParser {
     @Override
     public Set<KnownArtifact> getKnownArtifacts() {
       return this.knownArtifacts();
+    }
+
+    @Override
+    public Optional<String> getTextInfo() {
+      return textInfo();
     }
   }
 
@@ -247,7 +259,8 @@ public final class EnvironmentParser {
       Optional<String> parentName,
       Set<JoinedAgent> joinedAgents,
       Set<Artifact> artifacts,
-      Optional<Path> representation
+      Optional<Path> representation,
+      Optional<String> textInfo
   ) implements Workspace {
     @Override
     public String getName() {
@@ -273,6 +286,11 @@ public final class EnvironmentParser {
     public Optional<Path> getRepresentation() {
       return this.representation();
     }
+
+    @Override
+    public Optional<String> getTextInfo() {
+      return this.textInfo();
+    }
   }
 
   private record JoinedAgentImpl(String name) implements JoinedAgent {
@@ -287,7 +305,8 @@ public final class EnvironmentParser {
       Optional<String> clazz,
       List<?> initializationParameters,
       Set<FocusingAgent> focusingAgents,
-      Optional<Path> representation
+      Optional<Path> representation,
+      Optional<String> textInfo
   ) implements Artifact {
     @Override
     public String getName() {
@@ -312,6 +331,11 @@ public final class EnvironmentParser {
     @Override
     public Optional<Path> getRepresentation() {
       return this.representation();
+    }
+
+    @Override
+    public Optional<String> getTextInfo() {
+      return this.textInfo();
     }
   }
 

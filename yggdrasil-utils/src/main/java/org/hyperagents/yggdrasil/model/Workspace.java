@@ -14,4 +14,6 @@ public interface Workspace {
   Set<JoinedAgent> getAgents();
 
   Optional<Path> getRepresentation();
+
+  Optional<String> getTextInfo();
 }

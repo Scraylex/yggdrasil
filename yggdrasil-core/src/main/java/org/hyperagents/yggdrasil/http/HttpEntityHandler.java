@@ -242,7 +242,7 @@ public class HttpEntityHandler {
                     ((ArraySchema) inputSchema)
                       .parseJson(JsonParser.parseString(context.body().asString()))
                   ))
-              ))
+              )) //todo fix this shit
               .onSuccess(cartagoResponse -> {
                 final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
                 if (registry.hasFeedbackParam(artifactName, actionName)) {

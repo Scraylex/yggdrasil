@@ -5,6 +5,8 @@ import org.eclipse.rdf4j.model.Resource;
 import org.hyperagents.yggdrasil.nlp.IdentUtil;
 import org.hyperagents.yggdrasil.nlp.KnownPredicates;
 import org.hyperagents.yggdrasil.nlp.RdfTypeHandler;
+import org.hyperagents.yggdrasil.nlp.handlers.predicate.CommentHandler;
+import org.hyperagents.yggdrasil.nlp.handlers.predicate.HasActionAffordanceHandler;
 
 import java.util.stream.Collectors;
 
@@ -17,26 +19,19 @@ public class ArtifactHandler implements RdfTypeHandler {
     final var formatted = "%s is a Cartago artifact".formatted(subject.stringValue());
     stringBuilder.append(IdentUtil.identString(indentLevel, formatted));
     stringBuilder.append("\n");
-//    handleWorkspacesInHMASPlatform(model, subject, indentLevel, stringBuilder);
-    handleHasActionAffordances(model, subject, indentLevel, stringBuilder);
-    handleHasSecurityConfiguration(model, subject, indentLevel, stringBuilder);
-    handleIsContainedIn(model, subject, indentLevel, stringBuilder);
+//    handleHasActionAffordances(model, subject, indentLevel, stringBuilder);
+//    stringBuilder.append("\n");
+    handleComment(model, subject, indentLevel, stringBuilder);
     return stringBuilder.toString();
   }
 
-  private void handleIsContainedIn(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
-  }
-
-  private void handleHasSecurityConfiguration(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
-
-  }
-
   private void handleHasActionAffordances(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
-//    final var filteredModel = model.filter(subject, KnownPredicates.TD_ACTION_AFFORDANCE.getIRI(), null);
-//    final var collect = list.stream()
-//      .map(statement -> statement.getObject().stringValue())
-//      .collect(Collectors.joining(","));
-//    final var str = "Contains the following artifacts: %s".formatted(collect);
-//    stringBuilder.append(IdentUtil.identString(indentLevel, str));
+    final var string = new HasActionAffordanceHandler().handleStatement(model, subject, indentLevel);
+    stringBuilder.append(string);
+  }
+
+  private static void handleComment(Model model, Resource subject, int indentLevel, StringBuilder stringBuilder) {
+    final var string = new CommentHandler().handleStatement(model, subject, indentLevel);
+    stringBuilder.append(string);
   }
 }
