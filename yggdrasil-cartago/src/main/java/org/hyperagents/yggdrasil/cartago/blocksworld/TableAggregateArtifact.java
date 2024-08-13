@@ -16,30 +16,38 @@ public class TableAggregateArtifact extends HypermediaArtifact {
   private static final String PREFIX = "http://example.org/";
   private static final String TABLE_TYPE = PREFIX + "TableArtifact";
 
-  private final static String OBS_PROP_TABLE = "Table";
-  private final static String OBS_PROP_CORRECT = "Correct";
+  private final static String OBS_PROP_TABLE = "TableState";
+  private final static String OBS_PROP_CORRECT = "TableCorrect";
 
   private final static String TABLE_DESCRIPTION = """
     A table with three blocks A, B, and C. The blocks can be moved to three different positions LEFT, CENTER, RIGHT.
-    The blocks can only be moved if there is no block above them.
     Focus this artefact to observe the current configuration of the table and get updated after moving a block.
-    To move the blocks the inbuilt robot has to be used. The table can be observed to see the current state of the blocks.
     You can either check the current configuration of table with checkTable or move a block with moveBlock.
     ------------------
-    action %s/checkTable
-    input: doAction %s/checkTable
-    output: doAction succeeded with status code 200 and response: CENTER: B
-            LEFT: A
-            RIGHT: C
+    Invariant: The blocks can only be moved if there is no block above them.
     ------------------
-    action %s/moveBlock
-    input: doAction %s/moveBlock A CENTER
-    output: doAction succeeded with status code 200 and response: Block B moved to LEFT. Current state CENTER: \s
-            LEFT: A,B
-            RIGHT: C
-    input: doAction %s/moveBlock C CENTER
-    constraint: LEFT: C,B
-    output: doAction succeeded with status code 200 and response: Block A could not be moved to CENTER
+    Usage Examples:
+    ------------------
+    Example 1:
+    invoked action %s/checkTable
+    input: doAction %s/checkTable
+    output: 'Block positions are
+    CENTER: B
+    LEFT: A
+    RIGHT: C'
+    ------------------
+    Example 2:
+    invoked action %s/moveBlock
+    input: 'doAction %s/moveBlock A CENTER'
+    output: 'Block B moved to LEFT. Current state:
+    CENTER: \s
+    LEFT: A,B
+    RIGHT: C'
+    ------------------
+    Example 3:
+    invoked action %s/moveBlock
+    input: 'doAction %s/moveBlock C CENTER'
+    output: 'Constraint not satisfied. Block A could not be moved to CENTER because there is a block above it.'
     """;
 
   public void init() {
@@ -48,31 +56,31 @@ public class TableAggregateArtifact extends HypermediaArtifact {
   }
 
   @OPERATION
-  public void checkTable(final OpFeedbackParam<String> isSorted) {
+  public void checkTable(final OpFeedbackParam<ActionResult> isSorted) {
     this.log("checking table");
     String currentState = Table.getInstance().getCurrentState();
-    isSorted.set(currentState);
-    this.log(isSorted.get());
+    isSorted.set(new ActionResult(true, currentState));
+    this.log(currentState);
   }
 
   @OPERATION
-  public void moveBlock(String blockName, String position, OpFeedbackParam<String> moved) {
+  public void moveBlock(String blockName, String position, OpFeedbackParam<ActionResult> moved) {
     this.log("moving block " + blockName + " to " + position);
     boolean b = Table.getInstance().moveBlock(blockName, Position.valueOf(position));
     final String response;
-    if (b) {
-      response = "Block %s moved to %s. Current state %s".formatted(blockName, position, Table.getInstance().getCurrentState());
-    } else {
-      response = "Block %s could not be moved to %s".formatted(blockName, position);
+    if (!b) {
+      response = "Constraint not satisfied. Block %s could not be moved to %s".formatted(blockName, position);
       this.log(response);
-      moved.set(response);
+      moved.set(new ActionResult(false, response));
       return;
     }
-    moved.set(response);
-    this.log("moved");
+    response = "Block %s moved to %s".formatted(blockName, position);
+    this.log(response);
+    moved.set(new ActionResult(true, response));
+
     this.updateObsProperty(OBS_PROP_TABLE, Table.getInstance().getCurrentState());
 
-    if(Table.getInstance().isCorrectOrder() != this.getObsProperty(OBS_PROP_CORRECT).booleanValue()) {
+    if (Table.getInstance().isCorrectOrder() != this.getObsProperty(OBS_PROP_CORRECT).booleanValue()) {
       this.updateObsProperty(OBS_PROP_CORRECT, Table.getInstance().isCorrectOrder());
     }
   }
@@ -104,7 +112,9 @@ public class TableAggregateArtifact extends HypermediaArtifact {
 
     final var model = RdfModelUtils.createCommentModel(getArtifactUri(), TABLE_DESCRIPTION.formatted(getArtifactUri(),
       getArtifactUri(),
-      getArtifactUri(), getArtifactUri(),
+      getArtifactUri(),
+      getArtifactUri(),
+      getArtifactUri(),
       getArtifactUri()));
 
     this.addMetadata(model);
