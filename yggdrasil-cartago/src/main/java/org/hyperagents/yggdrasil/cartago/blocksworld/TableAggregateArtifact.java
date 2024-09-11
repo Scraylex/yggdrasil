@@ -24,7 +24,9 @@ public class TableAggregateArtifact extends HypermediaArtifact {
     Focus this artefact to observe the current configuration of the table and get updated after moving a block.
     You can either check the current configuration of table with checkTable or move a block with moveBlock.
     ------------------
-    Invariant: The blocks can only be moved if there is no block above them.
+    Invariant:
+    - The blocks can only be moved if there is no block above them.
+    - The order of blocks is read left to right with the left most being the lowest and right most being on top on the given position.
     ------------------
     Usage Examples:
     ------------------
@@ -40,7 +42,7 @@ public class TableAggregateArtifact extends HypermediaArtifact {
     invoked action %s/moveBlock
     input: 'doAction %s/moveBlock A CENTER'
     output: 'Block B moved to LEFT. Current state:
-    CENTER: \s
+    CENTER: EMPTY
     LEFT: A,B
     RIGHT: C'
     ------------------
@@ -71,6 +73,7 @@ public class TableAggregateArtifact extends HypermediaArtifact {
     if (!b) {
       response = "Constraint not satisfied. Block %s could not be moved to %s".formatted(blockName, position);
       this.log(response);
+      this.updateObsProperty(OBS_PROP_TABLE, Table.getInstance().getCurrentState());
       moved.set(new ActionResult(false, response));
       return;
     }

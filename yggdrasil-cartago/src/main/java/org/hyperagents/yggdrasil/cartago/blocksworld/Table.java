@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Table {
 
@@ -40,10 +41,12 @@ public class Table {
       .stream()
       .sorted(Comparator.comparing(Enum::name))
       .forEach(position -> stringBuilder
+        .append("|")
         .append(position.name())
         .append(": ")
-        .append(String.join(",", Table.getInstance().getColumns().get(position)))
-        .append("\n"));
+        .append(Table.getInstance().getColumns().get(position).isEmpty()
+          ? "EMPTY" : String.join(",", Table.getInstance().getColumns().get(position)))
+        .append("|"));
     return stringBuilder.toString();
   }
 
