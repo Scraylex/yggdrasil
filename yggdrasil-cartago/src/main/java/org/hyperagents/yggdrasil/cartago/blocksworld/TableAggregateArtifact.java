@@ -33,23 +33,17 @@ public class TableAggregateArtifact extends HypermediaArtifact {
     Example 1:
     invoked action %s/checkTable
     input: doAction %s/checkTable
-    output: 'Block positions are
-    CENTER: B
-    LEFT: A
-    RIGHT: C'
+    output: '|CENTER: B||LEFT: A||RIGHT: C|
     ------------------
     Example 2:
     invoked action %s/moveBlock
     input: 'doAction %s/moveBlock A CENTER'
-    output: 'Block B moved to LEFT. Current state:
-    CENTER: EMPTY
-    LEFT: A,B
-    RIGHT: C'
+    output: 'Block B moved to LEFT.'
     ------------------
     Example 3:
     invoked action %s/moveBlock
     input: 'doAction %s/moveBlock C CENTER'
-    output: 'Constraint not satisfied. Block A could not be moved to CENTER because there is a block above it.'
+    output: 'Constraint not satisfied. Block A could not be moved to CENTER because there is block C above it.'
     """;
 
   public void init() {
@@ -60,7 +54,7 @@ public class TableAggregateArtifact extends HypermediaArtifact {
   @OPERATION
   public void checkTable(final OpFeedbackParam<ActionResult> isSorted) {
     this.log("checking table");
-    String currentState = Table.getInstance().getCurrentState();
+    final var currentState = Table.getInstance().getCurrentState();
     isSorted.set(new ActionResult(true, currentState));
     this.log(currentState);
   }
@@ -68,10 +62,21 @@ public class TableAggregateArtifact extends HypermediaArtifact {
   @OPERATION
   public void moveBlock(String blockName, String position, OpFeedbackParam<ActionResult> moved) {
     this.log("moving block " + blockName + " to " + position);
-    boolean b = Table.getInstance().moveBlock(blockName, Position.valueOf(position));
+    final var newPosition = Position.valueOf(position);
+    final var b = Table.getInstance().moveBlock(blockName, newPosition);
     final String response;
     if (!b) {
-      response = "Constraint not satisfied. Block %s could not be moved to %s".formatted(blockName, position);
+      final var strings = Table.getInstance().getColumns().get(newPosition);
+      for (int i=0; i < strings.size(); i++) {
+        if (strings.get(i).equals(blockName)) {
+            response = "Constraint not satisfied. Block %s could not be moved to %s because there is block %s above it.".formatted(blockName, position, strings.get(i + 1));
+            this.log(response);
+            this.updateObsProperty(OBS_PROP_TABLE, Table.getInstance().getCurrentState());
+            moved.set(new ActionResult(false, response));
+            return;
+        }
+      }
+      response = "Constraint not satisfied. Block %s is not at position %s.".formatted(blockName, position);
       this.log(response);
       this.updateObsProperty(OBS_PROP_TABLE, Table.getInstance().getCurrentState());
       moved.set(new ActionResult(false, response));
