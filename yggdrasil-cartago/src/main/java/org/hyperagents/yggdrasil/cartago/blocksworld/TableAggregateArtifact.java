@@ -56,6 +56,8 @@ public class TableAggregateArtifact extends HypermediaArtifact {
     this.log("checking table");
     final var currentState = Table.getInstance().getCurrentState();
     isSorted.set(new ActionResult(true, currentState));
+    this.updateObsProperty(OBS_PROP_TABLE, Table.getInstance().getCurrentState());
+    this.updateObsProperty(OBS_PROP_CORRECT, Table.getInstance().isCorrectOrder());
     this.log(currentState);
   }
 
