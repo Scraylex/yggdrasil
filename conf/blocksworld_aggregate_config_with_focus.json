@@ -21,7 +21,13 @@
         "artifacts" : [
           {
             "name" : "table",
-            "class" : "http://example.org/TableArtifact"
+            "class" : "http://example.org/TableArtifact",
+            "focused-by" : [
+              {
+                "agent-uri" : "http://localhost:8080/agents/llm-agent",
+                "callback-uri" : "http://localhost:5000/websub"
+              }
+            ]
           }
         ],
         "agents" : [
