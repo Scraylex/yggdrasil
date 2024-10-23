@@ -4,7 +4,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Table {
 
@@ -78,6 +77,13 @@ public class Table {
     final var oldPosition = block.getPosition();
 
     if (block.isMoveable()) {
+
+      // mutation if old position is the same as new position
+      if (oldPosition == newPosition) {
+        return true;
+      }
+
+
       List<String> strings = Table.getInstance().getColumns().get(newPosition);
       // set block at new position & index
       int i = strings.size();
