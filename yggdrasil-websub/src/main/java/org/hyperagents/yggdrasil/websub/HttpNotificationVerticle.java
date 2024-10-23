@@ -10,15 +10,19 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import java.util.regex.Pattern;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
+
+import java.util.regex.Pattern;
 
 public class HttpNotificationVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(HttpNotificationVerticle.class);
@@ -31,9 +35,15 @@ public class HttpNotificationVerticle extends AbstractVerticle {
     this.registry = new NotificationSubscriberRegistry();
     final var client = WebClient.create(this.vertx);
     final var notificationConfig = this.vertx
-                                       .sharedData()
-                                       .<String, WebSubConfig>getLocalMap("notification-config")
-                                       .get("default");
+      .sharedData()
+      .<String, WebSubConfig>getLocalMap("notification-config")
+      .get("default");
+
+    final var environmentConfig = this.vertx
+      .sharedData()
+      .<String, EnvironmentConfig>getLocalMap("environment-config")
+      .get("default");
+
     final var webSubHubUri = notificationConfig.getWebSubHubUri();
     final var httpConfig =
         this.vertx.sharedData()
@@ -53,6 +63,11 @@ public class HttpNotificationVerticle extends AbstractVerticle {
                        )
         );
 
+    final var cartagoMessagebox = new CartagoMessagebox(
+      vertx.eventBus(),
+      environmentConfig
+    );
+
     final var ownMessagebox = new HttpNotificationDispatcherMessagebox(
         this.vertx.eventBus(),
         notificationConfig
@@ -60,8 +75,33 @@ public class HttpNotificationVerticle extends AbstractVerticle {
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
       switch (message.body()) {
-        case HttpNotificationDispatcherMessage.AddCallback(String requestIri, String callbackIri) ->
+        case HttpNotificationDispatcherMessage.AddCallback(String requestIri, String callbackIri) -> {
           this.registry.addCallbackIri(requestIri, callbackIri);
+
+          String[] segments = requestIri.split("/");
+          String workspaceName = null;
+          String artifactName = null;
+          for (int i = 0; i < segments.length; i++) {
+            if ("workspaces".equals(segments[i]) && i + 1 < segments.length) {
+              workspaceName = segments[i + 1];
+            }
+            if ("artifacts".equals(segments[i]) && i + 1 < segments.length) {
+              artifactName = segments[i + 1];
+            }
+          }
+          LOGGER.info("Sending focus message to: " + callbackIri);
+          cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
+            "http://localhost:8080/agents/llm-agent",
+            workspaceName,
+            artifactName
+          )).onComplete(ar -> {
+            if (ar.succeeded()) {
+              LOGGER.info("Focus message sent successfully");
+            } else {
+              LOGGER.error("Failed to send focus message: " + ar.cause().getMessage());
+            }
+          });
+        }
         case HttpNotificationDispatcherMessage.RemoveCallback(
             String requestIri,
             String callbackIri
