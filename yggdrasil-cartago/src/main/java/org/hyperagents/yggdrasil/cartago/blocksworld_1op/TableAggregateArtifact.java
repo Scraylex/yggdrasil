@@ -1,10 +1,11 @@
-package org.hyperagents.yggdrasil.cartago.blocksworld;
+package org.hyperagents.yggdrasil.cartago.blocksworld_1op;
 
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
+import org.hyperagents.yggdrasil.cartago.blocksworld_shared.ActionResult;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 
 import java.util.Arrays;

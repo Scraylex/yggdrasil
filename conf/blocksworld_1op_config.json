@@ -12,7 +12,7 @@
     "known-artifacts" : [
       {
         "class" : "http://example.org/TableArtifact",
-        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld.TableAggregateArtifact"
+        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld_1op.TableAggregateArtifact"
       }
     ],
     "workspaces" : [
