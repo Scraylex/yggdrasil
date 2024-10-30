@@ -99,13 +99,14 @@ public class RobotArtifact extends HypermediaArtifact {
       moved.set(new ActionResult(false, "No block to put down"));
     } else {
       Table.getInstance().putDown(pos, heldBlock);
+      final var tempName = heldBlock;
       isHolding = false;
       heldBlock = EMPTY;
       updateObsProperty(HAND_EMPTY, isHolding);
       updateObsProperty(HOLDING_BLOCK, heldBlock);
       ArtifactId artifactId = this.lookupArtifact("table");
       execLinkedOp(artifactId, "checkTable", moved);
-      moved.set(new ActionResult(true, "Block " + heldBlock + " putdown to " + position));
+      moved.set(new ActionResult(true, "Block " + tempName + " putdown to " + position));
     }
   }
 
