@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.cartago.blocksworld_4op;
+package org.hyperagents.yggdrasil.cartago.blocksworld_2op;
 
 import org.hyperagents.yggdrasil.cartago.blocksworld_shared.ITable;
 
@@ -77,8 +77,8 @@ public class Table implements ITable {
 
   public String pickUp(Position position) {
     List<String> blocks = getColumns().get(position);
-    if (blocks.size() > 1) {
-      throw new IllegalStateException("Cannot pick up a block from a position with more than one block");
+    if (blocks.isEmpty()) {
+      return "EMPTY";
     } else {
       String s = blocks.removeLast();
       Block block = getBlocks().get(s);
@@ -86,49 +86,32 @@ public class Table implements ITable {
       block.setMoveable(false);
       block.setPosition(Position.EMPTY);
       block.setIndex(-1);
+      if (!blocks.isEmpty()) {
+        String string = blocks.getLast();
+        Block block1 = getBlocks().get(string);
+        block1.setMoveable(true);
+      }
       return s;
     }
   }
 
   public String putDown(Position position, String block) {
     List<String> blocks = getColumns().get(position);
-    if(!blocks.isEmpty()) {
-      throw new IllegalStateException("Cannot put block down on a non-empty position");
-    }
+    final var idx = blocks.size();
     blocks.add(block);
     Block b = getBlocks().get(block);
     b.setMoveable(true);
     b.setOnTable(true);
     b.setPosition(position);
-    b.setIndex(0);
-    return block;
-  }
-
-  public boolean stack(String blockA, String blockB) {
-    Block b = getBlocks().get(blockB);
-    Position position = b.getPosition();
-    getColumns().get(position).add(blockA);
-    b.setMoveable(false);
-
-    Block a = getBlocks().get(blockA);
-    a.setMoveable(true);
-    a.setIndex(b.getIndex() + 1);
-    a.setPosition(position);
-    a.setOnTable(true);
-    return true;
-  }
-
-  public boolean unstack(String blockA, String blockB) {
-    Block b = getBlocks().get(blockB);
-    Position position = b.getPosition();
-    getColumns().get(position).add(blockA);
-    b.setMoveable(true);
-
-    Block a = getBlocks().remove(blockA);
-    a.setMoveable(false);
-    a.setIndex(-1);
-    a.setPosition(Position.EMPTY);
-    a.setOnTable(false);
-    return true;
+    if (idx > 0) {
+      b.setIndex(blocks.size() - 1);
+      //handle block below
+      String string = blocks.get(idx - 1);
+      Block block1 = getBlocks().get(string);
+      block1.setMoveable(false);
+    } else {
+      b.setIndex(0);
+    }
+    return "";
   }
 }

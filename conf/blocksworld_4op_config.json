@@ -12,11 +12,11 @@
     "known-artifacts" : [
       {
         "class" : "http://example.org/TableArtifact",
-        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld_2op.TableArtifact"
+        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld_4op.TableArtifact"
       },
       {
         "class" : "http://example.org/RobotArtifact",
-        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld_2op.RobotArtifact"
+        "template" : "org.hyperagents.yggdrasil.cartago.blocksworld_4op.RobotArtifact"
       }
     ],
     "workspaces" : [
