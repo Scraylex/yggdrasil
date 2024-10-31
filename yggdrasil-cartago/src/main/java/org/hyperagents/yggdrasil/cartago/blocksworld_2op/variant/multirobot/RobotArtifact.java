@@ -53,7 +53,7 @@ public class RobotArtifact extends HypermediaArtifact {
     Output: 'Block B putdown to RIGHT'
     # Observations
     The robot can be observed to see if it is holding a block and which block it is holding.
-    It supplies both 'isHolding(true)' and 'holdingBlock(A)' observations.
+    It supplies both 'isHolding%s(true)' and 'holdingBlock%s(A)' observations.
     # Invariant Conditions
     - The robot can only hold one block at a time.
     - The robot can only putdown a block if it is holding one.
@@ -149,8 +149,10 @@ public class RobotArtifact extends HypermediaArtifact {
     );
     this.registerFeedbackParameter("putdown");
 
-    final var model = RdfModelUtils.createCommentModel(getArtifactUri(), ROBOT_DESCRIPTION.formatted(getArtifactUri(), getArtifactUri(), getArtifactUri(), getArtifactUri()));
-
+    char s = this.getId().getName().charAt(this.getId().getName().length() - 1);
+    final var model = RdfModelUtils.createCommentModel(getArtifactUri(),
+      ROBOT_DESCRIPTION.formatted(getArtifactUri(), getArtifactUri(), getArtifactUri(), getArtifactUri(), s, s
+      ));
     this.addMetadata(model);
   }
 }
