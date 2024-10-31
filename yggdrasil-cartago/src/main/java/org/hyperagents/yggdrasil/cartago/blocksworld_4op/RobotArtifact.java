@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class RobotArtifact extends HypermediaArtifact {
 
   Set<String> BLOCK_SET = Set.of("A", "B", "C");
+  Position[] POSITION_SET = {Position.LEFT, Position.CENTER, Position.RIGHT};
   private static final String PREFIX = "http://example.org/";
   private static final String ROBOT_TYPE = PREFIX + "RobotArtifact";
 
@@ -31,8 +32,9 @@ public class RobotArtifact extends HypermediaArtifact {
 
   private static final String ROBOT_DESCRIPTION = """
     A robot that can move blocks around a table. The robot can move blocks A, B, and C to three different positions LEFT, CENTER, RIGHT.
-    A block can only be moved if there is no block above it otherwise the operation fails. This is done by two operations pickup and putdown.
-    pickup operation picks up a block from a given position and putdown operation puts the block down to a given position. They are invoked as follows
+    A block can only be moved by four operations pickup, putdown, stack and unstack.
+    pickup operation picks up a block from a given position if there is only a single block and putdown operation puts the block down to a given position if the position is empty.
+    The stack operation places a block on top of another block while the unstack operation removes a block from another block. They are invoked as follows
     # Examples
     Useage examples of the possible operations supplied by this artifact.
     ## Pickup
@@ -46,11 +48,13 @@ public class RobotArtifact extends HypermediaArtifact {
     Input: 'doAction %s/putdown RIGHT'
     Output: 'Block B putdown to RIGHT'
     ## Stack
+    The block to stack on top is the first argument and the block to stack on is the second argument.
     Input: 'doAction %s/stack A B'
     Output: 'Block A stacked on B'
     Input: 'doAction %s/stack C B'
     Output: 'Block C stacked on B'
     ## Unstack
+    The block to unstack and hold is the first argument and the block to unstack and make moveable is the second argument.
     Input: 'doAction %s/unstack A C'
     Output: 'Block A unstacked from C
     Input: 'doAction %s/unstack BLOCK_A BLOCK_B'
@@ -58,14 +62,19 @@ public class RobotArtifact extends HypermediaArtifact {
     # Observations
     The robot can be observed to see if it is holding a block and which block it is holding.
     It supplies both 'isHolding(true)' and 'holdingBlock(A)' observations.
-    # Invariants
+    # Invariant Conditions
     - The robot can only hold one block at a time.
-    - The robot can only putdown a block if it is holding one.
-    - the robot can only pickup a block if it is not holding one.
-    - the robot can only pick or place a block in the LEFT, CENTER or RIGHT position.
+    - The robot can only putdown a block if it is holding one and the position is 'EMPTY'.
+    - the robot can only pickup a block if it is not holding one and that is the only block at the position.
+    - the robot can only pick or place a block in the LEFT, CENTER or RIGHT position if it is the only block on the position.
     - Stacking a block on another block will make the block below unmovable until the block is unstacked and remove the block from the robot hand.
     - Unstacking a block from another block will make the block below moveable and place the block into the robot hand.
-    - pickup and putdown actions are only supported if there is only a single block in the position.
+    - pickup action is only supported if there is only a single block in the position and no block is currently held
+    - putdown action is only supported if there is no block in the position so the position is EMPTY and a block is currently held
+    - stack is only supported when there is a block already in the position and a block is currently held
+    - unstack is only supported when there are at least two blocks in the position and no block is currently held
+    - stack and unstack require 2 blocks as arguements
+    - pickup and putdown require a single position as arguement
     """;
 
   public void init() {
@@ -84,12 +93,13 @@ public class RobotArtifact extends HypermediaArtifact {
       moved.set(new ActionResult(false, "Robot is already holding a block"));
       return;
     }
-    if (Table.getInstance().getColumns().get(pos).size() > 1) {
+    Table instance = Table.getInstance();
+    if (instance.getColumns().get(pos).size() > 1) {
       moved.set(new ActionResult(false, "Cannot pick up a block from a position with more than one block"));
       return;
     }
     this.log("picking up block from" + position);
-    String s = Table.getInstance().pickUp(pos);
+    String s = instance.pickUp(pos);
     if (s.equals(EMPTY)) {
       moved.set(new ActionResult(false, "No block to pick up from " + pos));
     } else {
@@ -111,13 +121,14 @@ public class RobotArtifact extends HypermediaArtifact {
       return;
     }
     this.log("putting down block " + heldBlock + " on " + position);
-    final var block = Table.getInstance().getBlocks().get(heldBlock);
+    Table instance = Table.getInstance();
+    final var block = instance.getBlocks().get(heldBlock);
     if (!isHolding || block == null) {
       moved.set(new ActionResult(false, "No block to put down"));
-    } else if (!Table.getInstance().getColumns().get(pos).isEmpty()) {
+    } else if (!instance.getColumns().get(pos).isEmpty()) {
       moved.set(new ActionResult(false, "Cannot put block down on a position with a block"));
     } else {
-      Table.getInstance().putDown(pos, heldBlock);
+      instance.putDown(pos, heldBlock);
       final var tempName = heldBlock;
       isHolding = false;
       heldBlock = EMPTY;
@@ -131,8 +142,9 @@ public class RobotArtifact extends HypermediaArtifact {
 
   @OPERATION
   public void stack(String blockA, String blockB, OpFeedbackParam<ActionResult> moved) throws OperationException {
-    Block block = Table.getInstance().getBlocks().get(blockB);
-    List<String> strings = Table.getInstance().getColumns().get(block.getPosition());
+    Table instance = Table.getInstance();
+    Block block = instance.getBlocks().get(blockB);
+    List<String> strings = instance.getColumns().get(block.getPosition());
     if (strings.isEmpty()) {
       moved.set(new ActionResult(false, "Cannot stack a block on an empty position"));
       return;
@@ -141,14 +153,20 @@ public class RobotArtifact extends HypermediaArtifact {
       moved.set(new ActionResult(false, "Cannot stack a block if not holding one"));
       return;
     }
+    if(!heldBlock.equals(blockA)) {
+      moved.set(new ActionResult(false, "Cannot stack a block that is not held"));
+      return;
+    }
     if (!block.isMoveable()) {
       moved.set(new ActionResult(false, "Cannot stack a block " + blockA + " on non-moveable block" + blockB));
       return;
     }
     this.log("stacking " + blockA + " on " + blockB);
-    boolean s = Table.getInstance().stack(blockA, blockB);
+    boolean s = instance.stack(blockA, blockB);
     isHolding = false;
     heldBlock = EMPTY;
+    updateObsProperty(HAND_EMPTY, isHolding);
+    updateObsProperty(HOLDING_BLOCK, heldBlock);
     ArtifactId artifactId = this.lookupArtifact("table");
     execLinkedOp(artifactId, "checkTable", moved);
     moved.set(new ActionResult(true, "Block " + blockA + " stacked on " + blockB));
@@ -156,8 +174,9 @@ public class RobotArtifact extends HypermediaArtifact {
 
   @OPERATION
   public void unstack(String blockA, String blockB, OpFeedbackParam<ActionResult> moved) throws OperationException {
-    Block block = Table.getInstance().getBlocks().get(blockB);
-    List<String> strings = Table.getInstance().getColumns().get(block.getPosition());
+    Table instance = Table.getInstance();
+    Block block = instance.getBlocks().get(blockB);
+    List<String> strings = instance.getColumns().get(block.getPosition());
     if (strings.isEmpty()) {
       moved.set(new ActionResult(false, "Cannot unstack a block with from empty position"));
       return;
@@ -170,12 +189,19 @@ public class RobotArtifact extends HypermediaArtifact {
       moved.set(new ActionResult(false, "Cannot unstack a block while holding one"));
       return;
     }
+    if (!instance.getBlocks().get(blockA).getPosition().equals(instance.getBlocks().get(blockB).getPosition())) {
+      moved.set(new ActionResult(false, "Blocks are not in the same position"));
+      return;
+    }
+
     this.log("unstacking " + blockA + " from " + blockB);
-    boolean s = Table.getInstance().unstack(blockA, blockB);
+    boolean s = instance.unstack(blockA, blockB);
+    isHolding = true;
+    heldBlock = blockA;
+    updateObsProperty(HAND_EMPTY, isHolding);
+    updateObsProperty(HOLDING_BLOCK, heldBlock);
     ArtifactId artifactId = this.lookupArtifact("table");
     execLinkedOp(artifactId, "checkTable", moved);
-    isHolding = false;
-    heldBlock = blockA;
     moved.set(new ActionResult(true, "Block " + blockA + " unstacked from " + blockB));
   }
 
@@ -187,7 +213,7 @@ public class RobotArtifact extends HypermediaArtifact {
       "/pickup"
       , new ArraySchema.Builder()
         .addItem(new StringSchema.Builder()
-          .addEnum(Arrays.stream(Position.values())
+          .addEnum(Arrays.stream(POSITION_SET)
             .map(Enum::name)
             .collect(Collectors.toUnmodifiableSet()))
           .build())
@@ -201,7 +227,7 @@ public class RobotArtifact extends HypermediaArtifact {
       "/putdown"
       , new ArraySchema.Builder()
         .addItem(new StringSchema.Builder()
-          .addEnum(Arrays.stream(new Position[]{Position.LEFT, Position.CENTER, Position.RIGHT})
+          .addEnum(Arrays.stream(POSITION_SET)
             .map(Enum::name)
             .collect(Collectors.toUnmodifiableSet()))
           .build())

@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class RobotArtifact extends HypermediaArtifact {
 
   Set<String> BLOCK_SET = Set.of("A", "B", "C");
+  Position[] POSITION_SET = {Position.LEFT, Position.CENTER, Position.RIGHT};
   private static final String PREFIX = "http://example.org/";
   private static final String ROBOT_TYPE = PREFIX + "RobotArtifact";
 
@@ -47,12 +48,12 @@ public class RobotArtifact extends HypermediaArtifact {
     # Observations
     The robot can be observed to see if it is holding a block and which block it is holding.
     It supplies both 'isHolding(true)' and 'holdingBlock(A)' observations.
-    # Invariants
+    # Invariant Conditions
     - The robot can only hold one block at a time.
     - The robot can only putdown a block if it is holding one.
     - the robot can only pickup a block if it is not holding one.
     - the robot can only pick or place a block in the LEFT, CENTER or RIGHT position.
-    - Placing a block on a position will make the block below it unmovable until the block is picked up.
+    - Placing a block on a position will make the block below it unmovable if present until the placed block is picked up.
     """;
 
   public void init() {
@@ -110,16 +111,6 @@ public class RobotArtifact extends HypermediaArtifact {
     }
   }
 
-//  @OPERATION
-//  public void stack(String blockA, String blockB, OpFeedbackParam<ActionResult> moved) {
-//
-//  }
-//
-//  @OPERATION
-//  public void unstack(String blockA, String blockB, OpFeedbackParam<ActionResult> moved) {
-//
-//  }
-
   @Override
   protected void registerInteractionAffordances() {
     this.registerActionAffordance(
@@ -128,7 +119,7 @@ public class RobotArtifact extends HypermediaArtifact {
       "/pickup"
       , new ArraySchema.Builder()
         .addItem(new StringSchema.Builder()
-          .addEnum(Arrays.stream(Position.values())
+          .addEnum(Arrays.stream(POSITION_SET)
             .map(Enum::name)
             .collect(Collectors.toUnmodifiableSet()))
           .build())
@@ -142,43 +133,13 @@ public class RobotArtifact extends HypermediaArtifact {
       "/putdown"
       , new ArraySchema.Builder()
         .addItem(new StringSchema.Builder()
-          .addEnum(Arrays.stream(new Position[]{Position.LEFT, Position.CENTER, Position.RIGHT})
+          .addEnum(Arrays.stream(POSITION_SET)
             .map(Enum::name)
             .collect(Collectors.toUnmodifiableSet()))
           .build())
         .build()
     );
     this.registerFeedbackParameter("putdown");
-
-//    this.registerActionAffordance(
-//      ROBOT_TYPE + "#stack",
-//      "stack",
-//      "/stack"
-//      , new ArraySchema.Builder()
-//        .addItem(new StringSchema.Builder()
-//          .addEnum(BLOCK_SET)
-//          .build())
-//        .addItem(new StringSchema.Builder()
-//          .addEnum(BLOCK_SET)
-//          .build())
-//        .build()
-//    );
-//    this.registerFeedbackParameter("stack");
-//
-//    this.registerActionAffordance(
-//      ROBOT_TYPE + "#unstack",
-//      "unstack",
-//      "/unstack"
-//      , new ArraySchema.Builder()
-//        .addItem(new StringSchema.Builder()
-//          .addEnum(BLOCK_SET)
-//          .build())
-//        .addItem(new StringSchema.Builder()
-//          .addEnum(BLOCK_SET)
-//          .build())
-//        .build()
-//    );
-//    this.registerFeedbackParameter("unstack");
 
     final var model = RdfModelUtils.createCommentModel(getArtifactUri(), ROBOT_DESCRIPTION.formatted(getArtifactUri(), getArtifactUri(), getArtifactUri(), getArtifactUri()));
 

@@ -120,11 +120,11 @@ public class Table implements ITable {
 
   public boolean unstack(String blockA, String blockB) {
     Block b = getBlocks().get(blockB);
-    Position position = b.getPosition();
-    getColumns().get(position).add(blockA);
     b.setMoveable(true);
+    Position position = b.getPosition();
 
-    Block a = getBlocks().remove(blockA);
+    Block a = getBlocks().get(blockA);
+    getColumns().get(position).remove(blockA);
     a.setMoveable(false);
     a.setIndex(-1);
     a.setPosition(Position.EMPTY);
