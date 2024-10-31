@@ -126,7 +126,7 @@ public class RobotArtifact extends HypermediaArtifact {
     if (!isHolding || block == null) {
       moved.set(new ActionResult(false, "No block to put down"));
     } else if (!instance.getColumns().get(pos).isEmpty()) {
-      moved.set(new ActionResult(false, "Cannot put block down on a position with a block"));
+      moved.set(new ActionResult(false, "Cannot put block down on a non EMPTY position "));
     } else {
       instance.putDown(pos, heldBlock);
       final var tempName = heldBlock;
@@ -158,7 +158,7 @@ public class RobotArtifact extends HypermediaArtifact {
       return;
     }
     if (!block.isMoveable()) {
-      moved.set(new ActionResult(false, "Cannot stack a block " + blockA + " on non-moveable block" + blockB));
+      moved.set(new ActionResult(false, "Cannot stack block " + blockA + " on not moveable block " + blockB));
       return;
     }
     this.log("stacking " + blockA + " on " + blockB);
@@ -169,7 +169,7 @@ public class RobotArtifact extends HypermediaArtifact {
     updateObsProperty(HOLDING_BLOCK, heldBlock);
     ArtifactId artifactId = this.lookupArtifact("table");
     execLinkedOp(artifactId, "checkTable", moved);
-    moved.set(new ActionResult(true, "Block " + blockA + " stacked on " + blockB));
+    moved.set(new ActionResult(true, "block " + blockA + " stacked on " + blockB));
   }
 
   @OPERATION
@@ -178,7 +178,7 @@ public class RobotArtifact extends HypermediaArtifact {
     Block block = instance.getBlocks().get(blockB);
     List<String> strings = instance.getColumns().get(block.getPosition());
     if (strings.isEmpty()) {
-      moved.set(new ActionResult(false, "Cannot unstack a block with from empty position"));
+      moved.set(new ActionResult(false, "Cannot unstack a block at a empty position"));
       return;
     }
     if (strings.size() == 1) {
@@ -190,7 +190,7 @@ public class RobotArtifact extends HypermediaArtifact {
       return;
     }
     if (!instance.getBlocks().get(blockA).getPosition().equals(instance.getBlocks().get(blockB).getPosition())) {
-      moved.set(new ActionResult(false, "Blocks are not in the same position"));
+      moved.set(new ActionResult(false, "blocks to unstack are not in the same position"));
       return;
     }
 
@@ -202,7 +202,7 @@ public class RobotArtifact extends HypermediaArtifact {
     updateObsProperty(HOLDING_BLOCK, heldBlock);
     ArtifactId artifactId = this.lookupArtifact("table");
     execLinkedOp(artifactId, "checkTable", moved);
-    moved.set(new ActionResult(true, "Block " + blockA + " unstacked from " + blockB));
+    moved.set(new ActionResult(true, "block " + blockA + " unstacked from " + blockB));
   }
 
   @Override
