@@ -89,6 +89,9 @@ public class HttpNotificationVerticle extends AbstractVerticle {
               artifactName = segments[i + 1];
             }
           }
+          if(artifactName == null) {
+            return;
+          }
           LOGGER.info("Sending focus message to: " + callbackIri);
           cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
             "http://localhost:8080/agents/llm-agent",
